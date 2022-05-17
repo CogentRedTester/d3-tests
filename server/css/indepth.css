@@ -1,0 +1,159 @@
+
+body {
+    font-family: "Helvetica Neue", Helvetica, sans-serif;
+    font-size: 14px;
+    color: #333;
+    background-color:floralwhite;
+}
+circle {
+    fill: orange;
+}
+g.item text {
+    fill: #ddd;
+    font-size: 70px;
+    text-anchor: middle;
+    font-weight: bold;
+}
+
+.bars rect {
+    fill: steelblue;
+}
+
+.bars rect:hover {
+    fill: orange;
+}
+
+.labels text {
+    text-anchor: end;
+}
+
+.data svg {
+    max-width: fit-content
+}
+
+table, th, td {
+    border: 1px solid grey;
+    border-collapse: collapse;
+    /* padding: none; */
+    margin: none;
+}
+
+g text {
+    dominant-baseline: middle;
+}
+
+.axis path,
+.axis .tick line {
+    stroke: grey;
+}
+.axis .tick text {
+    fill: green;
+}
+
+.data circle {
+    fill: black;
+}
+
+.data circle.new {
+    fill: red;
+}
+
+.data circle:hover {
+    fill: orange;
+}
+
+circle.microservice {
+    fill: skyblue
+}
+
+circle.channel {
+    fill: lightgray
+}
+
+.edges line,
+.edges.arrow {
+    stroke-width: 1;
+    stroke: lightgrey;
+    fill: lightgrey;
+}
+
+/* #arrowhead-publish .arrow {
+    fill: green;
+    stroke: green;
+}
+
+#arrowhead-subscribe .arrow {
+    fill: orange;
+    stroke: orange;
+} */
+
+/* marker {
+    stroke-width: 2;
+} */
+
+/* .edges line.publish {
+    stroke: lightsalmon
+} */
+
+.force_graph.labels text,
+.geo_graph.labels text {
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+}
+
+.force_graph.nodes circle:hover {
+    opacity: 70%;
+}
+
+#geo_1 {
+    background-color: antiquewhite;
+}
+
+.geography {
+    fill: seagreen;
+    stroke: antiquewhite;
+    stroke-width: 0.01px;
+}
+
+.geography path:hover {
+    fill: green;
+}
+
+.cells text {
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.cells.data rect {
+    /* display: none; */
+    stroke: none;
+    fill: floralwhite;
+    /* -moz-transition: all 0.5s;
+    -o-transition: all 0.5s;
+    -webkit-transition: all 0.5s; */
+    transition: all 0.5s;
+}
+
+.cells.data rect:hover {
+    /* display: none; */
+    fill: antiquewhite;
+    transition: none;
+}
+
+.cells.data rect.publish {
+    fill: seagreen;
+}
+
+.cells.data rect.subscribe {
+    fill: coral;
+}
+
+.matrix.rules line {
+    stroke: lightgray
+}
+
+.matrix.rules .mid-vertical line {
+    stroke: lightgray;
+    opacity: 0.3;
+}

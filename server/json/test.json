@@ -1,0 +1,132 @@
+[
+    {
+        "name": "M1",
+        "server": "α",
+        "channels": [
+            {
+                "name": "A",
+                "publish": true,
+                "subscribe": false
+            },
+            {
+                "name": "B",
+                "publish": true,
+                "subscribe": true
+            },
+            {
+                "name": "C",
+                "publish": false,
+                "subscribe": true
+            },
+            {
+                "name": "D",
+                "publish": true,
+                "subscribe": false
+            }
+        ]
+    },
+    {
+        "name": "M2",
+        "server": "α",
+        "channels": [
+            {
+                "name": "A",
+                "publish": true,
+                "subscribe": false
+            },
+            {
+                "name": "B",
+                "publish": false,
+                "subscribe": false
+            },
+            {
+                "name": "C",
+                "publish": false,
+                "subscribe": false
+            },
+            {
+                "name": "D",
+                "publish": false,
+                "subscribe": true
+            }
+        ]
+    },
+    {
+        "name": "M3",
+        "server": "α",
+        "channels": [
+            {
+                "name": "A",
+                "publish": false,
+                "subscribe": false
+            },
+            {
+                "name": "B",
+                "publish": false,
+                "subscribe": false
+            },
+            {
+                "name": "C",
+                "publish": true,
+                "subscribe": false
+            },
+            {
+                "name": "D",
+                "publish": false,
+                "subscribe": true
+            }
+        ]
+    },
+    {
+        "name": "M4",
+        "server": "β",
+        "channels": [
+            {
+                "name": "A",
+                "publish": true,
+                "subscribe": true
+            },
+            {
+                "name": "B",
+                "publish": true,
+                "subscribe": false
+            },
+            {
+                "name": "C",
+                "publish": false,
+                "subscribe": false
+            },
+            {
+                "name": "D",
+                "publish": false,
+                "subscribe": false
+            }
+        ]
+    },
+    {
+        "name": "M5",
+        "server": "β",
+        "channels": [
+            {
+                "name": "A",
+                "publish": true,
+                "subscribe": false
+            },
+            {
+                "name": "B",
+                "publish": false,
+                "subscribe": false
+            },
+            {
+                "name": "C",
+                "publish": true,
+                "subscribe": false
+            },
+            {
+                "name": "D",
+                "publish": true,
+                "subscribe": false
+            }
+        ]
+    }
+]

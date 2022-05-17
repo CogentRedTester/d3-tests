@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf8">
+    <title>D3 in Depth</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="css/indepth.css">
+</head>
+<body>
+    <h1>D3 in Depth</h1>
+
+    <!-- <svg width="1060" height="140">
+        <g transform="translate(70, 70)">
+            <circle/>
+            <circle cx="120" />
+            <circle cx="240" />
+            <circle cx="360" />
+            <circle cx="480" />
+        </g>
+    </svg> -->
+    <!-- <br> -->
+	<svg width="760" height="140">
+		<g transform="translate(70, 70)">
+			<g class="item" transform="translate(0, 0)"><circle r="40" /></g>
+			<g class="item" transform="translate(120, 0)"><circle r="40" /></g>
+			<g class="item" transform="translate(240, 0)"><circle r="40" /></g>
+		</g>
+	</svg>
+
+    <br>
+    <svg width="600" height="100">
+        <g class="join1" transform="translate(50, 0)">
+        </g>
+    </svg>
+    <hr>
+
+    <div>
+        <h2>Matrix</h2>
+        <table id="table1" width="500"></table>
+        <button onclick="generate_table()">Update</button>
+    </div>
+    <hr>
+
+    <br>
+    <div>
+        <h2>Bar Plot</h2>
+        <svg id="bar_graph1">
+            <g id="bar1" class="bars" transform="translate(70, 30)"></g>
+            <g id="labels1" class="labels" transform="translate(66, 30)"></g>
+            <g id="values1" class="values" transform="translate(70, 30)"></g>
+            <g class="axis" transform="translate(70, 500)"></g>
+        </svg>
+        <div>
+            <button onclick="bar_chart(true)">Randomise</button>
+            <button onclick="bar_chart()">Reset</button>
+        </div>
+    </div>
+    <hr>
+
+    <div>
+        <h2>Scatter Plot</h2>
+        <svg id="scatter_1"></svg>
+        <br>
+        <input type="number" min="0" max="10000" step="1" value="10" id="scatter_num">
+        <button onclick="scatter_chart()">Generate</button>
+    </div>
+    <hr>
+
+    <div>
+        <h2>Force Graph</h2>
+        <svg id="force_1">
+            <defs>
+                <marker id="arrowhead-subscribe" viewBox="0 0 10 10"
+                        markerWidth="10" markerHeight="10"
+                        refX="30" refY="5" orient="auto">
+                    <path d="M0,0 L0,10 L10,5 L0,0" class="edges arrow"/>
+                </marker>
+                <marker id="arrowhead-publish" viewBox="0 0 10 10"
+                        markerWidth="10" markerHeight="10"
+                        refX="25" refY="5" orient="auto">
+                    <path d="M0,0 L0,10 L10,5 L0,0" class="edges arrow"/>
+                </marker>
+            </defs>
+            
+            <g class="edges force_graph"></g>
+            <g class="nodes force_graph"></g>
+            <g class="labels force_graph"></g>
+        </svg>
+        <br>
+        <button onclick="force_graph()">Update</button>
+    </div>
+    <hr>
+
+    <div>
+        <h2>Map</h2>
+        <svg id="geo_1">
+            <g class="geo_graph geography"></g>
+            <g class="geo_graph labels"></g>
+        </svg>
+        <hr>
+        <button onclick="map_aus('json/australia.geojson', 'STATE_NAME')">Australia</button>
+        <button onclick="map_aus('json/SA.geojson')">South Australia</button>
+    </div>
+
+    <div>
+        <h2>Matrix v2</h2>
+        <svg id="matrix_2">
+            <g class="cells data"></g>
+            <g class="headers rows cells"></g>
+            <g class="headers columns cells"></g>
+            <g class="matrix rules">
+                <g class="matrix mid-vertical"></g>
+                <g class="matrix vertical"></g>
+                <g class="matrix horizontal"></g>
+            </g>
+        </svg>
+        <br>
+        <button onclick="matrix_svg()">Update</button>
+    </div>
+
+<script src="scripts/indepth.js"></script>
+</body>
+</html>

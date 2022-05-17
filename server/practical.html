@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>My First SVG</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <svg width="200" height="200">
+        <circle cx="50" cy="50" r="40" stroke="black" stroke-width="2" fill="yellow" />
+        <rect x="100" y="100" width="50" height="50" stroke="black" stroke-width="2" fill="red" />
+    </svg>
+    <svg width="200" height="200" style="background: #EEE">
+        <rect x="10" y="40" width="170" height="20" stroke="black" stroke-width="2" fill="blue" />
+        <rect x="10" y="80" width="90" height="20" stroke="black" stroke-width="2" fill="blue" />
+        <rect x="10" y="120" width="50" height="20" stroke="black" stroke-width="2" fill="blue" />
+        <rect x="10" y="160" width="30" height="20" stroke="black" stroke-width="2" fill="blue" />
+
+        <text x="10" y="35" fill="black" font-size="12">USA (17 Trillion USD)</text>
+        <text x="10" y="75" fill="black" font-size="12">Chine (9 Trillion USD)</text>
+        <text x="10" y="115" fill="black" font-size="12">Japan (5 Trillion USD)</text>
+        <text x="10" y="155" fill="black" font-size="12">Germany (3 Trillion USD)</text>
+    </svg>
+
+    <svg width="200" height="200" id="drawing-area">
+    </svg>
+<script src="scripts/practical.js"></script>
+</body>
+
+</html>

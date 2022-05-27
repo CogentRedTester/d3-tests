@@ -157,3 +157,7 @@ circle.channel {
     stroke: lightgray;
     opacity: 0.3;
 }
+
+svg.bordered {
+    border: 1px solid lightgray;
+}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf8">
+    <title>D3 Nodes</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="css/indepth.css">
+</head>
+<body>
+    <h1>D3 Nodes</h1>
+    <div>
+        <h2>Force Graph</h2>
+        <svg id="force_1" class="bordered">
+            <defs>
+                <marker id="arrowhead-subscribe" viewBox="0 0 10 10"
+                        markerWidth="10" markerHeight="10"
+                        refX="30" refY="5" orient="auto">
+                    <path d="M0,0 L0,10 L10,5 L0,0" class="edges arrow"/>
+                </marker>
+                <marker id="arrowhead-publish" viewBox="0 0 10 10"
+                        markerWidth="10" markerHeight="10"
+                        refX="25" refY="5" orient="auto">
+                    <path d="M0,0 L0,10 L10,5 L0,0" class="edges arrow"/>
+                </marker>
+            </defs>
+            
+            <g class="edges force_graph"></g>
+            <g class="nodes force_graph"></g>
+            <g class="labels force_graph"></g>
+        </svg>
+        <br>
+        <button onclick="force_graph()">Update</button>
+    </div>
+
+<script src="scripts/nodes.js"></script>
+</body>
+</html>

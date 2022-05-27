@@ -109,7 +109,7 @@
         "channels": [
             {
                 "name": "A",
-                "publish": true,
+                "publish": false,
                 "subscribe": false
             },
             {

@@ -17,8 +17,12 @@ function drag(simulation) {
             })
 }
 
-async function force_graph() {
-    let microservices = await d3.json("json/microservice_dump.json")
+let simulation = null
+
+function force_graph(microservices) {
+    if (simulation) simulation.stop();
+    let w = 1200
+    let h = 600
     let channels = {}
     let nodes = []
     let edges = []
@@ -27,7 +31,9 @@ async function force_graph() {
         console.log(microservice)
         let i = nodes.push({
             name: microservice.name,
-            type: "microservice"
+            type: "microservice",
+            // x: w/2,
+            // y: h/2
         })
         microservice.index = i - 1
         for (const channel in microservice.channels) {
@@ -38,7 +44,9 @@ async function force_graph() {
     for (const channel in channels) {
         let i = nodes.push({
             name: channel,
-            type: "channel"
+            type: "channel",
+            // x: w/2,
+            // y: h/2
         })
         channels[channel].index = i - 1
     }
@@ -63,10 +71,7 @@ async function force_graph() {
         }
     }
 
-    let w = 1000
-    let h = 600
-
-    let simulation = d3.forceSimulation()
+    simulation = d3.forceSimulation()
 
     let svg = d3.select("#force_1")
         .attr("width", w)
@@ -123,14 +128,65 @@ async function force_graph() {
 
     simulation.nodes(nodes)
         // .force("charge", d3.forceManyBody().strength(-400))
-        // .force("center", d3.forceCenter(w/2, h/2).strength(0.05))
+        .force("center", d3.forceCenter(w/2, h/2).strength(0.1))
         .force("m_repulsion", custom_repulsion.strength(-1000))
         .force("charge", d3.forceManyBody().strength(-100))
-        .force("centerx", d3.forceX(w/2).strength(0.05))
-        .force("centery", d3.forceY(h/2).strength(0.05))
-        .force("link", d3.forceLink(edges).distance(50))
+        // .force("centerx", d3.forceX(w/2).strength(0.05))
+        // .force("centery", d3.forceY(h/2).strength(0.05))
+        .force("link", d3.forceLink(edges).distance(100))
         .force("collision", d3.forceCollide().radius(30))
         .on("tick", tick)
 
 }
-force_graph()
+
+function random_graph() {
+    let num_services = document.getElementById("num_m").value;
+    let num_channels = document.getElementById("num_c").value;
+
+    let microservices = [];
+    let channels = [];
+
+    if (num_services == "") num_services = Math.round(Math.random() * 500);
+    if (num_services < 2) num_services = 2;
+
+    if (num_channels == "") num_channels = Math.round(Math.random() * 100);
+    for (let index = 0; index < num_channels; index++) {
+        channels.push({ name: (index + 1).toString() });
+    }
+
+    for (let index = 0; index < num_services; index++) {
+        let microservice = {};
+        microservice.name = "M"+(index + 1);
+        microservice.channels = {};
+
+
+        let num_connections = Math.ceil(Math.random() * Math.max(num_channels/10, Math.min(num_channels, 5)));
+        for (let i = 0; i < num_connections; i++) {
+            let index = Math.floor(Math.random() * num_channels);
+            console.log(index)
+            let connection = { name: channels[index].name };
+
+            let r = Math.random();
+            if (r < 0.1) {
+                connection.publish = true;
+                connection.subscribe = true;
+            } else if (r < 0.5) {
+                connection.publish = true;
+            } else {
+                connection.subscribe = true;
+            }
+
+            microservice.channels[connection.name] = connection;
+        }
+
+        microservices.push(microservice);
+    }
+
+    force_graph(microservices)
+}
+
+async function json_graph() {
+    force_graph(await d3.json("json/microservice_dump.json"))
+}
+
+json_graph();

@@ -78,21 +78,24 @@ circle.channel {
 }
 
 /* #arrowhead-publish .arrow {
-    fill: green;
-    stroke: green;
+    fill: seagreen;
+    stroke: seagreen;
 }
 
 #arrowhead-subscribe .arrow {
-    fill: orange;
-    stroke: orange;
-} */
+    fill: lightsalmon;
+    stroke: lightsalmon;
+}
 
-/* marker {
+marker {
     stroke-width: 2;
-} */
+}
 
-/* .edges line.publish {
-    stroke: lightsalmon
+.edges line.publish {
+    stroke: seagreen;
+}
+.edges line.subscribe {
+    stroke: lightsalmon;
 } */
 
 .force_graph.labels text,
@@ -160,4 +163,5 @@ circle.channel {
 
 svg.bordered {
     border: 1px solid lightgray;
+    /* background-color: white; */
 }

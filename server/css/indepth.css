@@ -5,6 +5,24 @@ body {
     color: #333;
     background-color:floralwhite;
 }
+
+.column {
+    float: left;
+    width: 50%;
+}
+
+.scrollable {
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+/* Clear floats after the columns */
+.row:after {
+content: "";
+display: table;
+clear: both;
+}
+
 circle {
     fill: orange;
 }
@@ -70,6 +88,15 @@ circle.channel {
     fill: lightgray
 }
 
+circle.selected,
+rect.selected {
+    fill: khaki;
+}
+
+.selected.highlight {
+    opacity: 40%;
+}
+
 .edges line,
 .edges.arrow {
     stroke-width: 1;
@@ -126,6 +153,7 @@ marker {
 .cells text {
     text-anchor: middle;
     dominant-baseline: middle;
+    pointer-events: none;
 }
 
 .cells.data rect {
@@ -135,20 +163,26 @@ marker {
     /* -moz-transition: all 0.5s;
     -o-transition: all 0.5s;
     -webkit-transition: all 0.5s; */
-    transition: all 0.5s;
+    /* transition: all 0.5s; */
 }
 
-.cells.data rect:hover {
-    /* display: none; */
+.cells.data polygon {
+    stroke: none;
+}
+
+/* .cells.data rect:hover {
+    display: none;
     fill: antiquewhite;
     transition: none;
-}
+} */
 
-.cells.data rect.publish {
+.cells.data rect.publish,
+polygon.publish {
     fill: seagreen;
 }
 
-.cells.data rect.subscribe {
+.cells.data rect.subscribe,
+polygon.subscribe {
     fill: coral;
 }
 

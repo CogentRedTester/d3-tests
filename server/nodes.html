@@ -8,32 +8,62 @@
 </head>
 <body>
     <h1>D3 Nodes</h1>
-    <div>
-        <h2>Force Graph</h2>
-        <svg id="force_1" class="bordered">
-            <defs>
-                <marker id="arrowhead-subscribe" viewBox="0 0 10 10"
-                        markerWidth="10" markerHeight="10"
-                        refX="30" refY="5" orient="auto">
-                    <path d="M0,0 L0,10 L10,5 L0,0" class="edges arrow"/>
-                </marker>
-                <marker id="arrowhead-publish" viewBox="0 0 10 10"
-                        markerWidth="10" markerHeight="10"
-                        refX="25" refY="5" orient="auto">
-                    <path d="M0,0 L0,10 L10,5 L0,0" class="edges arrow"/>
-                </marker>
-            </defs>
-            
-            <g class="edges force_graph"></g>
-            <g class="nodes force_graph"></g>
-            <g class="labels force_graph"></g>
-        </svg>
-        <br>
-        <button onclick="json_graph()">Update</button>
-        <button onclick="random_graph()">Randomise</button>
-        <input type="number" min="0" max="10000" step="1" value="" id="num_m">
-        <input type="number" min="0" max="10000" step="1" value="" id="num_c">
+    <div class="row">
+        <div class="column">
+            <h2>Force Graph</h2>
+            <svg id="force_1" class="bordered">
+                <defs>
+                    <marker id="arrowhead-subscribe" viewBox="0 0 10 10"
+                            markerWidth="10" markerHeight="10"
+                            refX="30" refY="5" orient="auto">
+                        <path d="M0,0 L0,10 L10,5 L0,0" class="edges arrow"/>
+                    </marker>
+                    <marker id="arrowhead-publish" viewBox="0 0 10 10"
+                            markerWidth="10" markerHeight="10"
+                            refX="25" refY="5" orient="auto">
+                        <path d="M0,0 L0,10 L10,5 L0,0" class="edges arrow"/>
+                    </marker>
+                </defs>
+                
+                <g class="edges force_graph"></g>
+                <g class="nodes force_graph"></g>
+                <g class="labels force_graph"></g>
+            </svg>
+            <br>
+            <button onclick="json_graph()">Update</button>
+            <button onclick="random_graph()">Randomise</button>
+            <input type="number" min="0" max="10000" step="1" value="" id="num_m">
+            <input type="number" min="0" max="10000" step="1" value="" id="num_ch">
+            <input type="number" min="0" max="10000" step="1" value="" id="num_con">
+            <button onclick="kill_simulation()">Kill Simulation</button>
+        </div>
+
+        <div class="column">
+            <h2>Matrix</h2>
+            <div id="matrix_2_container" class="scrollable">
+                <svg id="matrix_2" overflow="scroll">
+                    <g class="cells data"></g>
+                    <g class="headers rows cells"></g>
+                    <g class="headers columns cells"></g>
+                    <g class="matrix rules">
+                        <g class="matrix mid-vertical"></g>
+                        <g class="matrix vertical"></g>
+                        <g class="matrix horizontal"></g>
+                    </g>
+                    <g class="highlights"></g>
+                </svg>
+            </div>
+            <br>
+            <button onclick="resetZoom(document.getElementById('matrix_2'))">Reset Zoom</button>
+            <button onclick="matrix_json()">Update</button>
+            <input type="checkbox" id="scroll_checkbox" name="scroll" checked="true">
+            <label for="scroll_checkbox">Enable Scrolling</label>
+        </div>
     </div>
+    <svg>
+        <polygon points="0,0 0,100 90,50" class="publish" transform="matrix(1.5,1)"/>
+        <polygon points="0,0 100,0 100,100 0,100, 90,50" class="subscribe"/>
+    </svg>
 
 <script src="scripts/nodes.js"></script>
 </body>

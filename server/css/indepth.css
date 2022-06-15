@@ -6,6 +6,10 @@ body {
     background-color:floralwhite;
 }
 
+svg .background {
+    fill: floralwhite;
+}
+
 .column {
     float: left;
     width: 50%;
@@ -93,6 +97,10 @@ rect.selected {
     fill: khaki;
 }
 
+.highlight.background {
+    opacity: 0%;
+}
+
 .selected.highlight {
     opacity: 40%;
 }
@@ -102,6 +110,11 @@ rect.selected {
     stroke-width: 1;
     stroke: lightgrey;
     fill: lightgrey;
+}
+
+.edges line.selected {
+    fill: red;
+    stroke: red;
 }
 
 /* #arrowhead-publish .arrow {

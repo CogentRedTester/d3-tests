@@ -21,7 +21,8 @@ let selected = {
     microservice: new Set(),
     channel: new Set()
 };
-let simulation = null
+let simulation = null;
+let tick = null;
 
 function svg_zoom(svg, enable) {
     if (enable === false) {
@@ -37,8 +38,6 @@ function svg_zoom(svg, enable) {
 }
 
 function force_graph(microservices) {
-    selected.microservice.clear();
-    selected.channel.clear();
     kill_simulation();
 
     let w = 900
@@ -75,13 +74,19 @@ function force_graph(microservices) {
             const element = microservice.channels[channel]
             if (element.publish) {
                 edges.push({
+                    microservice: microservice.name,
+                    channel: channel,
+
                     source: microservice.index,
                     target: channels[channel].index,
-                    publish: true
+                    publish: true,
                 })
             }
             if (element.subscribe) {
                 edges.push({
+                    microservice: microservice.name,
+                    channel: channel,
+
                     source: channels[channel].index,
                     target: microservice.index,
                     subscribe: true
@@ -97,7 +102,7 @@ function force_graph(microservices) {
         .attr("height", h)
         .call(svg_zoom);
 
-    function tick() {
+    tick = function() {
         svg.select("g.edges")
             .selectAll("line")
             .data(edges)
@@ -109,6 +114,9 @@ function force_graph(microservices) {
             .attr("y2", d => d.target.y)
             .classed("publish", d => d.publish)
             .classed("subscribe", d => d.subscribe)
+            .classed("selected", function(d) {
+                return selected.microservice.has(d.microservice);
+            });
 
         svg.select("g.nodes")
             .selectAll("circle")
@@ -120,15 +128,13 @@ function force_graph(microservices) {
             .attr("cy", d => d.y)
             .classed("microservice", d => d.type == "microservice")
             .classed("channel", d => d.type == "channel")
+            .classed("selected", d => selected[d.type].has(d.name))
             .on("click", function(d) {
                 let data = this.__data__;
-
-                let node = d3.select(this);
                 let select = !this.classList.contains("selected");
-                node.classed("selected", select);
-
                 if (select) selected[data.type].add(data.name)
                 else selected[data.type].delete(data.name);
+                tick();
                 matrix_svg(microservices);
             });
         
@@ -360,15 +366,23 @@ async function matrix_svg(json) {
     
     let highlights = svg.select("g.highlights");
     highlights.selectAll("rect")
-        .data(selected.microservice)
+        .data(json)
         .join("rect")
         .attr("x", 0)
-        .attr("y", d => rowScale(d))
+        .attr("y", d => rowScale(d.name))
         .attr("width", w_padded)
         .attr("height", rowScale.bandwidth())
-        .classed("selected", true)
-        .classed("highlight", true);
-    
+        .classed("selected", d => selected.microservice.has(d.name))
+        .classed("highlight", true)
+        .classed("background", true)
+        .on("click", function(d) {
+            let data = this.__data__;
+            let select = !this.classList.contains("selected");
+            if (select) selected.microservice.add(data.name)
+            else selected.microservice.delete(data.name);
+            tick();
+            matrix_svg(json);
+        });
     // svg.select("g.rules .mid-vertical")
     //     .selectAll("line")
     //     .data(channels)
@@ -449,6 +463,8 @@ async function matrix_json() {
 
 async function random_graph() {
     let random = generate_random();
+    selected.microservice.clear();
+    selected.channel.clear();
     force_graph(random);
     matrix_svg(random);
 }

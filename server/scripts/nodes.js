@@ -81,8 +81,8 @@ function force_graph(topology) {
     simulation = d3.forceSimulation();
 
     let svg = d3.select("#force_1")
-        .attr("width", w)
-        .attr("height", h)
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", `0 0 ${w} ${h}`)
         .call(svg_zoom);
 
     tick = function() {
@@ -205,14 +205,12 @@ async function matrix_svg(json, topology) {
         svg.call(svg_zoom);
     }
 
-    svg.attr("width", w)
-        .attr("height", h_padded)
-        // .attr("viewbox", "0,0,"+w+','+h)
-        // .call(svg_zoom);
+    svg.attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", `0 0 ${w} ${h_padded}`);
     
-    d3.select("#matrix_2_container")
-        .style("width", w+"px")
-        .style("height", h+"px")
+    // d3.select("#matrix_2_container")
+    //     .style("width", w+"px")
+    //     .style("height", h+"px")
     
     channels = Array.from(channels).sort( (a,b) => a.localeCompare(b) );
     let m_names = get_names(json).sort( (a,b) => a.localeCompare(b) );

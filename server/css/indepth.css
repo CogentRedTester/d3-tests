@@ -10,14 +10,19 @@ svg .background {
     fill: floralwhite;
 }
 
+.row {
+    display: flex;
+}
+
 .column {
     float: left;
-    width: 50%;
+    width: 50vw;
 }
 
 .scrollable {
     overflow-y: scroll;
     overflow-x: hidden;
+    height: clamp(300px, 70vh, 70vh);
 }
 
 /* Clear floats after the columns */

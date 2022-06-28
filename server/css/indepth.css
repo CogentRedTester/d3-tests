@@ -112,10 +112,20 @@ rect.selected {
     fill: lightgrey;
 }
 
-.edges line.selected {
+/* .edges line.selected {
     fill: red;
     stroke: red;
+} */
+
+.edges line.selected {
+    fill: lime;
+    stroke: lime;
 }
+
+/* .edges line.selected.subscribe {
+    fill: coral;
+    stroke: coral;
+} */
 
 /* #arrowhead-publish .arrow {
     fill: seagreen;

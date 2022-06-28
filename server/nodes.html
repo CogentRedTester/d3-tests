@@ -32,6 +32,8 @@
             <br>
             <button onclick="json_graph()">Update</button>
             <button onclick="random_graph()">Randomise</button>
+            <input type="checkbox" id="channel_checkbox" name="channel" checked="true">
+            <label for="channel_checkbox">Channels</label>
             <input type="number" min="0" max="10000" step="1" value="" id="num_m">
             <input type="number" min="0" max="10000" step="1" value="" id="num_ch">
             <input type="number" min="0" max="10000" step="1" value="" id="num_con">
@@ -60,10 +62,8 @@
             <label for="scroll_checkbox">Enable Scrolling</label>
         </div>
     </div>
-    <svg>
-        <polygon points="0,0 0,100 90,50" class="publish" transform="matrix(1.5,1)"/>
-        <polygon points="0,0 100,0 100,100 0,100, 90,50" class="subscribe"/>
-    </svg>
+    <label for="search">Search:</label>
+    <input id="searchbar" onkeyup="search()" type="text" name="search">
 
 <script src="scripts/nodes.js"></script>
 </body>

@@ -17,12 +17,47 @@ function drag(simulation) {
             })
 }
 
-let selected = {
-    microservice: new Set(),
-    channel: new Set()
-};
+let topology = null;
 let simulation = null;
 let tick = null;
+let update_matrix = null;
+
+function clear_selection() {
+    if (!topology) return;
+    topology.nodes.forEach( n => n.selected = false );
+    topology.edges.forEach( e => e.selected = false );
+}
+
+function select_up(node) {
+
+}
+
+function select_edge_down(node, depth, references) {
+    // if (depth > 2) return;
+    if (references[node.index]) return;
+    references[node.index] = true;
+
+    node.outEdges.forEach( edge => {
+        edge.selected = true;
+        select_edge_down(edge.targetNode, depth + 1, references);
+    });
+}
+
+function select(node) {
+    let data = node.__data__;
+    // console.log(data);
+
+    if (data.type != "microservice") return;
+
+    let select = !data.selected;
+    clear_selection()
+    if (select) {
+        data.selected = true;
+        select_edge_down(data, 0, {});
+    }
+
+    update();
+}
 
 function svg_zoom(svg, enable) {
     if (enable === false) {
@@ -37,65 +72,13 @@ function svg_zoom(svg, enable) {
     return svg.call(zoom);
 }
 
-function force_graph(microservices) {
+function force_graph(topology) {
     kill_simulation();
 
-    let w = 900
-    let h = 600
-    let channels = {}
-    let nodes = []
-    let edges = []
+    let w = 900;
+    let h = 600;
 
-    for (const microservice of microservices) {
-        let i = nodes.push({
-            name: microservice.name,
-            type: "microservice",
-            // x: w/2,
-            // y: h/2
-        })
-        microservice.index = i - 1
-        for (const channel in microservice.channels) {
-            channels[channel] = {}
-        }
-    }
-
-    for (const channel in channels) {
-        let i = nodes.push({
-            name: channel,
-            type: "channel",
-            // x: w/2,
-            // y: h/2
-        })
-        channels[channel].index = i - 1
-    }
-
-    for (const microservice of microservices) {
-        for (const channel in microservice.channels) {
-            const element = microservice.channels[channel]
-            if (element.publish) {
-                edges.push({
-                    microservice: microservice.name,
-                    channel: channel,
-
-                    source: microservice.index,
-                    target: channels[channel].index,
-                    publish: true,
-                })
-            }
-            if (element.subscribe) {
-                edges.push({
-                    microservice: microservice.name,
-                    channel: channel,
-
-                    source: channels[channel].index,
-                    target: microservice.index,
-                    subscribe: true
-                })
-            }
-        }
-    }
-
-    simulation = d3.forceSimulation()
+    simulation = d3.forceSimulation();
 
     let svg = d3.select("#force_1")
         .attr("width", w)
@@ -105,22 +88,20 @@ function force_graph(microservices) {
     tick = function() {
         svg.select("g.edges")
             .selectAll("line")
-            .data(edges)
+            .data(topology.edges)
             .join("line")
-            .attr("marker-end", d => d.publish ? "url(#arrowhead-publish)" : "url(#arrowhead-subscribe)")
+            .attr("marker-end", d => d.type == "publish" ? "url(#arrowhead-publish)" : "url(#arrowhead-subscribe)")
             .attr("x1", d => d.source.x)
             .attr("y1", d => d.source.y)
             .attr("x2", d => d.target.x)
             .attr("y2", d => d.target.y)
-            .classed("publish", d => d.publish)
-            .classed("subscribe", d => d.subscribe)
-            .classed("selected", function(d) {
-                return selected.microservice.has(d.microservice);
-            });
+            .classed("publish", d => d.type == "publish")
+            .classed("subscribe", d => d.type == "subscribe" || d.type == "dependency")
+            .classed("selected", edge => edge.selected );
 
         svg.select("g.nodes")
             .selectAll("circle")
-            .data(nodes)
+            .data(topology.nodes)
             .join("circle")
             .call(drag(simulation))
             .attr("r", d => d.type == "microservice" ? 20 : 15)
@@ -128,25 +109,21 @@ function force_graph(microservices) {
             .attr("cy", d => d.y)
             .classed("microservice", d => d.type == "microservice")
             .classed("channel", d => d.type == "channel")
-            .classed("selected", d => selected[d.type].has(d.name))
+            .classed("selected", d => d.selected)
             .on("click", function(d) {
-                let data = this.__data__;
-                let select = !this.classList.contains("selected");
-                if (select) selected[data.type].add(data.name)
-                else selected[data.type].delete(data.name);
-                tick();
-                matrix_svg(microservices);
+                select(this)
             });
         
         svg.select("g.labels")
             .selectAll("text")
-            .data(nodes)
+            .data(topology.nodes)
             .join("text")
             .text(d => d.name)
             .attr("x", d => d.x)
             .attr("y", d => d.y)
     }
 
+    // creates repulsion between microservice nodes only
     // https://stackoverflow.com/questions/39575319/partial-forces-on-nodes-in-d3-js/39597440#39597440
     let custom_repulsion = d3.forceManyBody();
     let original_init = custom_repulsion.initialize;
@@ -154,15 +131,32 @@ function force_graph(microservices) {
         original_init(nodes.filter(function(n) { return n.type == "microservice" } ));
     }
 
-    simulation.nodes(nodes)
+    // let custom_leftright = d3.forceX();
+    // let original_init_leftright = custom_leftright.initialize;
+    // original_init_leftright
+
+    // let force_strength = d3.scaleLinear()
+    //     .domain([
+    //         d3.min(microservices, d => d.num_subscribers - d.num_publishers),
+    //         d3.max(microservices, d => d.num_subscribers - d.num_publishers)
+    //     ])
+    //     .range([1, 0])
+
+    simulation.nodes(topology.nodes)
         // .force("charge", d3.forceManyBody().strength(-400))
         .force("center", d3.forceCenter(w/2, h/2).strength(0.1))
         .force("m_repulsion", custom_repulsion.strength(-1000))
         .force("charge", d3.forceManyBody().strength(-100))
         // .force("centerx", d3.forceX(w/2).strength(0.05))
         // .force("centery", d3.forceY(h/2).strength(0.05))
-        .force("link", d3.forceLink(edges).distance(100))
+        .force("link", d3.forceLink(topology.edges).distance(100))
         .force("collision", d3.forceCollide().radius(30))
+        // .force("x_pos", d3.forceX(Number.MIN_VALUE).strength( d => {
+        //     if (d.type == "channel") return 0;
+        //     let strength = force_strength(d.original_obj.num_subscribers - d.original_obj.num_publishers);
+        //     console.log(d, strength);
+        //     return strength;
+        // } ))
         .on("tick", tick)
 
 }
@@ -176,7 +170,7 @@ function get_names(arr, key) {
     return names
 }
 
-async function matrix_svg(json) {
+async function matrix_svg(json, topology) {
     let cells = [];
     let channels = new Set();
     for (const microservice of json) {
@@ -188,7 +182,6 @@ async function matrix_svg(json) {
             cells.push({
                 "microservice": microservice.name,
                 "channel": name,
-                // "contents": [channel.publish, channel.subscribe]
                 "contents": {
                     publish: channel.publish,
                     subscribe: channel.subscribe
@@ -196,19 +189,6 @@ async function matrix_svg(json) {
             })
         }
     }
-    
-    // json.forEach(microservice => {
-    //     channels.forEach( channel => {
-    //         cells.push({
-    //             "microservice": microservice.name,
-    //             "channel": channel,
-    //             "contents": [
-    //                 microservice.channels[channel] && microservice.channels[channel].publish,
-    //                 microservice.channels[channel] && microservice.channels[channel].subscribe
-    //             ]
-    //         })
-    //     })
-    // });
 
     let svg = d3.select("#matrix_2");
     let margin = {top: 10, right: 10, bottom: 10, left: 10};
@@ -261,136 +241,98 @@ async function matrix_svg(json) {
         return v + rowScale.bandwidth() / 2
     }
 
-    svg.select("g.headers.rows")
-        .selectAll("text")
-        .data(json)
-        .join("text")
-        .text(d => d.name)
-        .attr("x", column_mid)
-        .attr("y", row_mid )
-    
-    svg.select("g.headers.columns")
-        .selectAll("text")
-        .data(channels)
-        .join("text")
-        .text( d => d )
-        .attr("x", column_mid)
-        .attr("y", row_mid)
-    
-    svg.select("g.cells.data")
-        .selectAll("g")
-        .data(cells)
-        .join("g")
-        .each(function(cell) {
-            let height = rowScale.bandwidth();
-            let width = colScale.bandwidth();
-            let y = rowScale(cell.microservice);
-            let x = colScale(cell.channel);
+    update_matrix = function() {
+        svg.select("g.headers.rows")
+            .selectAll("text")
+            .data(json)
+            .join("text")
+            .text(d => d.name)
+            .attr("x", column_mid)
+            .attr("y", row_mid )
+        
+        svg.select("g.headers.columns")
+            .selectAll("text")
+            .data(channels)
+            .join("text")
+            .text( d => d )
+            .attr("x", column_mid)
+            .attr("y", row_mid)
+        
+        svg.select("g.cells.data")
+            .selectAll("g")
+            .data(cells)
+            .join("g")
+            .each(function(cell) {
+                let height = rowScale.bandwidth();
+                let width = colScale.bandwidth();
+                let y = rowScale(cell.microservice);
+                let x = colScale(cell.channel);
 
-            let g = d3.select(this);
-            g.selectAll("polygon").remove();
+                let g = d3.select(this);
+                g.selectAll("polygon").remove();
 
-            if (cell.contents.publish) {
-                g.append("polygon")
-                    .attr("points", `${x},${y} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`)
-                    .classed("publish", true)
-            }
+                if (cell.contents.publish) {
+                    g.append("polygon")
+                        .attr("points", `${x},${y} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`)
+                        .classed("publish", true)
+                }
 
-            if (cell.contents.subscribe) {
-                g.append("polygon")
-                    .attr("points", `${x},${y} ${x+width},${y} ${x+width},${y+height} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`)
-                    .classed("subscribe", true)
-            }
+                if (cell.contents.subscribe) {
+                    g.append("polygon")
+                        .attr("points", `${x},${y} ${x+width},${y} ${x+width},${y+height} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`)
+                        .classed("subscribe", true)
+                }
+            });
+        
+        let vertical = svg.select("g.rules .vertical")
+        vertical.selectAll("line")
+            .data(channels)
+            .join("line")
+            .attr("x1", d => colScale(d))
+            .attr("y1", rowScale("") )
+            .attr("x2", d => colScale(d))
+            .attr("y2", h_padded)
+        
+        vertical.append("line")
+            .attr("x1", w_padded)
+            .attr("y1", rowScale(""))
+            .attr("x2", w_padded)
+            .attr("y2", h_padded)
 
-                // .selectAll("polygon")
-                // .data(cell.contents)
-                // .join("polygon")
-                // .attr("height", height)
-                // .attr("width", width)
-                // .attr("points", function(d, i) {
-                //     if (i == 0) { //publish
-                //         return `${x},${y} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`;
-                //     } else { //subscribe
-                //         return "";
-                //     }
-                // })
-                // .attr("display", d => d ? "" : "none")
-                // .classed("publish", (d, i) => i == 0 && d)
-                // .classed("subscribe", (d, i) => i == 1 && d)
-                // .attr("x", (_,i) => colScale(cell.channel) + (i * (colScale.bandwidth() / 2)) )
-                // .attr("y", (_,i) => rowScale(cell.microservice) )
-                // .each(function(bool, i) {
-                //     let rect = d3.select(this)
-                //     if (i == 0)
-                //         rect.classed("publish", bool)
-                //     else
-                //         rect.classed("subscribe", bool)
-                // })
-            
-            // if (cell.publish) {
-            //     g.append("polygon")
-            //         .attr("points", "0,0 0,100 90,50")
-            //         .classed("publish")
-            // }
-        })
-    
-    let vertical = svg.select("g.rules .vertical")
-    vertical.selectAll("line")
-        .data(channels)
-        .join("line")
-        .attr("x1", d => colScale(d))
-        .attr("y1", rowScale("") )
-        .attr("x2", d => colScale(d))
-        .attr("y2", h_padded)
-    
-    vertical.append("line")
-        .attr("x1", w_padded)
-        .attr("y1", rowScale(""))
-        .attr("x2", w_padded)
-        .attr("y2", h_padded)
+        let horizontal = svg.select("g.rules .horizontal")
+        horizontal.selectAll("line")
+            .data(json)
+            .join("line")
+            .attr("x1", colScale(""))
+            .attr("y1", d => rowScale(d.name))
+            .attr("x2", w_padded )
+            .attr("y2", d => rowScale(d.name))
+        
+        horizontal.append("line")
+            .attr("x1", colScale(""))
+            .attr("y1", h_padded)
+            .attr("x2", w_padded)
+            .attr("y2", h_padded)
+        
+        let highlights = svg.select("g.highlights");
+        highlights.selectAll("rect")
+            .data(topology.nodes.filter(d => d.type == "microservice"))
+            .join("rect")
+            .attr("x", 0)
+            .attr("y", d => rowScale(d.name))
+            .attr("width", w_padded)
+            .attr("height", rowScale.bandwidth())
+            .classed("selected", d => d.selected)
+            .classed("highlight", true)
+            .classed("background", true)
+            .on("click", function(d) {
+                this.__data__.type = "microservice";
+                this.__data__.original_obj = this.__data__;
+                select(this, json);
+            });
+    }
 
-    let horizontal = svg.select("g.rules .horizontal")
-    horizontal.selectAll("line")
-        .data(json)
-        .join("line")
-        .attr("x1", colScale(""))
-        .attr("y1", d => rowScale(d.name))
-        .attr("x2", w_padded )
-        .attr("y2", d => rowScale(d.name))
-    
-    horizontal.append("line")
-        .attr("x1", colScale(""))
-        .attr("y1", h_padded)
-        .attr("x2", w_padded)
-        .attr("y2", h_padded)
-    
-    let highlights = svg.select("g.highlights");
-    highlights.selectAll("rect")
-        .data(json)
-        .join("rect")
-        .attr("x", 0)
-        .attr("y", d => rowScale(d.name))
-        .attr("width", w_padded)
-        .attr("height", rowScale.bandwidth())
-        .classed("selected", d => selected.microservice.has(d.name))
-        .classed("highlight", true)
-        .classed("background", true)
-        .on("click", function(d) {
-            let data = this.__data__;
-            let select = !this.classList.contains("selected");
-            if (select) selected.microservice.add(data.name)
-            else selected.microservice.delete(data.name);
-            tick();
-            matrix_svg(json);
-        });
-    // svg.select("g.rules .mid-vertical")
-    //     .selectAll("line")
-    //     .data(channels)
-    //     .join("line")
-    //     .attr("x1", d => column_mid(d))
-    //     .attr("y1", rowScale("") + rowScale.bandwidth())
-    //     .attr("x2", d => column_mid(d))
-    //     .attr("y2", h_padded)
+    update_matrix();
 }
 
 function generate_random() {
@@ -440,6 +382,135 @@ function generate_random() {
     return microservices;
 }
 
+function make_edge(type, source, target) {
+    return {
+        type: type,
+        source: source.index,
+        target: target.index,
+        sourceNode: source,
+        targetNode: target,
+    }
+}
+
+function setup_edges(json) {
+    let show_channels = document.getElementById("channel_checkbox").checked
+
+    let nodes = [];
+    let edges = [];
+    let channels = {};
+
+    for (const microservice of json) {
+        let n = {
+            type: "microservice",
+            data: microservice,
+            name: microservice.name,
+            inEdges: [],
+            outEdges: [],
+        };
+        let index = nodes.push(n);
+        microservice.node = n;
+        n.index = index - 1;
+
+        for (const channel in microservice.channels) {
+            let n = channels[channel];
+            if (!n) {
+                n = {
+                    publishers: new Set(),
+                    subscribers: new Set()
+                };
+                channels[channel] = n;
+            }
+
+            microservice.channels[channel].node = n;
+            if (microservice.channels[channel].publish) n.publishers.add(microservice.node);
+            if (microservice.channels[channel].subscribe) n.subscribers.add(microservice.node);
+        }
+    }
+
+    if (show_channels) {
+        for (const channel in channels) {
+            let n = channels[channel];
+            n.type = "channel";
+            n.name = channel;
+            n.inEdges = [];
+            n.outEdges = [];
+            
+            let index = nodes.push(n);
+            n.index = index - 1;
+        }
+    }
+
+    for (const microservice of json) {
+        for (const channel in microservice.channels) {
+            const element = microservice.channels[channel];
+
+            if (show_channels) {
+                if (element.publish) {
+                    let edge = make_edge("publish", microservice.node, element.node)
+                    microservice.node.outEdges.push(edge);
+                    element.node.inEdges.push(edge);
+                    let i = edges.push(edge);
+                    edge.index = i - 1;
+                }
+
+                if (element.subscribe) {
+                    let edge = make_edge("subscribe", element.node, microservice.node)
+                    element.node.outEdges.push(edge);
+                    microservice.node.inEdges.push(edge);
+                    let i = edges.push(edge);
+                    edge.index = i - 1;
+                }
+            } else {
+                if (element.publish) {
+                    channels[channel].subscribers.forEach( ms => {
+                        console.log(ms);
+                        let edge = make_edge("dependency", microservice.node, ms);
+                        microservice.node.outEdges.push(edge);
+                        ms.inEdges.push(edge);
+                        let i = edges.push(edge);
+                        edge.index = i - 1;
+                    });
+                }
+
+                // if (element.subscribe) {
+                //     channels[channel].publishers.forEach( ms => {
+                //         console.log(ms);
+                //         let edge = make_edge("dependency", microservice.node, ms);
+                //         microservice.node.outEdges.push(edge);
+                //         ms.inEdges.push(edge);
+                //         let i = edges.push(edge);
+                //         edge.index = i - 1;
+                //     });
+                // }
+            }
+        }
+    }
+
+    return {nodes: nodes, edges: edges}
+}
+
+function update() {
+    tick();
+    update_matrix();
+}
+
+function search() {
+    if (!topology) return;
+    clear_selection();
+    let input = document.getElementById('searchbar').value
+    if (input == "") return update();
+
+    input = input.toLowerCase();
+
+    topology.nodes.forEach( node => {
+        if (node.name.toLowerCase().indexOf(input) != -1) {
+            node.selected = true;
+        }
+    })
+
+    update();
+}
+
 function kill_simulation() {
     if (simulation)
         simulation.stop();
@@ -451,22 +522,23 @@ function resetZoom(element) {
         .attr("transform", "")
 }
 
+
 async function json_graph() {
-    force_graph(await d3.json("json/microservice_dump.json"))
-}
-
-json_graph();
-
-async function matrix_json() {
-    matrix_svg(await d3.json("json/microservice_dump.json"))
+    clear_selection();
+    let json = await d3.json("json/microservice_dump.json");
+    topology = setup_edges(json);
+    force_graph(topology);
+    matrix_svg(json, topology);
 }
 
 async function random_graph() {
     let random = generate_random();
-    selected.microservice.clear();
-    selected.channel.clear();
-    force_graph(random);
-    matrix_svg(random);
+    clear_selection();
+
+    topology = setup_edges(random);
+
+    force_graph(topology);
+    matrix_svg(random, topology);
 }
 
-matrix_json()
+json_graph()

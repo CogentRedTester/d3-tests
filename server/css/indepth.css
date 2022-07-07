@@ -213,6 +213,10 @@ polygon.publish {
 polygon.subscribe {
     fill: coral;
 }
+.cells.data rect.dependency,
+polygon.dependency {
+    fill: skyblue;
+}
 
 .matrix.rules line {
     stroke: lightgray

@@ -59,6 +59,10 @@ function select(node) {
     update();
 }
 
+function get_checkbox(id) {
+    return document.getElementById(id).checked;
+}
+
 function svg_zoom(svg, enable) {
     if (enable === false) {
         return svg.on(".zoom", null);
@@ -170,25 +174,10 @@ function get_names(arr, key) {
     return names
 }
 
-async function matrix_svg(json, topology) {
-    let cells = [];
-    let channels = new Set();
-    for (const microservice of json) {
-        for (const name in microservice.channels) {
-            const channel = microservice.channels[name];
-            if (! microservice || ! channel) continue;
-            channels.add(name);
-
-            cells.push({
-                "microservice": microservice.name,
-                "channel": name,
-                "contents": {
-                    publish: channel.publish,
-                    subscribe: channel.subscribe
-                }
-            })
-        }
-    }
+async function matrix_svg(topology) {
+    let show_channels = get_checkbox("channel_checkbox");
+    let microservices = topology.nodes.filter(n => n.type == "microservice");
+    let channels = topology.nodes.filter(n => n.type == "channel");
 
     let svg = d3.select("#matrix_2");
     let margin = {top: 10, right: 10, bottom: 10, left: 10};
@@ -198,8 +187,8 @@ async function matrix_svg(json, topology) {
     let w_padded = w - margin.left - margin.right;
     let h_padded = h - margin.top - margin.bottom;
 
-    if (document.getElementById("scroll_checkbox").checked) {
-        h_padded = Math.max(h_padded, json.length * 15);
+    if (get_checkbox("scroll_checkbox")) {
+        h_padded = Math.max(h_padded, microservices.length * 15);
         svg.call(svg_zoom, false);
     } else {
         svg.call(svg_zoom);
@@ -212,9 +201,8 @@ async function matrix_svg(json, topology) {
     //     .style("width", w+"px")
     //     .style("height", h+"px")
     
-    channels = Array.from(channels).sort( (a,b) => a.localeCompare(b) );
-    let m_names = get_names(json).sort( (a,b) => a.localeCompare(b) );
-    let c_names = channels.slice(0);
+    let m_names = get_names(microservices).sort( (a,b) => a.localeCompare(b) );
+    let c_names = get_names(channels).sort( (a,b) => a.localeCompare(b) );
     m_names.unshift("");
     c_names.unshift("");
 
@@ -223,72 +211,85 @@ async function matrix_svg(json, topology) {
         .range([margin.top, h_padded])
         // .paddingInner(0.1)
     let colScale = d3.scaleBand()
-        .domain(c_names)
+        .domain( show_channels ? c_names : m_names)
         .range([margin.left, w_padded])
         // .paddingInner(0.1)
 
     function column_mid(d) {
-        let v = colScale(d)
-        if (!v) v = colScale("")
+        let v;
+        if (!d)
+            v = colScale("")
+        else
+            v = colScale(d.name);
         return v + colScale.bandwidth() / 2
     }
 
     function row_mid(d) {
-        let v = rowScale(d.name)
-        if (!v) v = rowScale("")
+        let v;
+        if (!d)
+            v = rowScale("")
+        else
+            v = rowScale(d.name);
         return v + rowScale.bandwidth() / 2
     }
 
     update_matrix = function() {
         svg.select("g.headers.rows")
             .selectAll("text")
-            .data(json)
+            .data(microservices)
             .join("text")
             .text(d => d.name)
-            .attr("x", column_mid)
+            .attr("x", column_mid())
             .attr("y", row_mid )
         
         svg.select("g.headers.columns")
             .selectAll("text")
-            .data(channels)
+            .data(show_channels ? channels : microservices)
             .join("text")
-            .text( d => d )
+            .text( d => d.name )
             .attr("x", column_mid)
-            .attr("y", row_mid)
+            .attr("y", row_mid())
         
         svg.select("g.cells.data")
-            .selectAll("g")
-            .data(cells)
-            .join("g")
-            .each(function(cell) {
+            .selectAll("polygon")
+            .data(topology.edges)
+            .join("polygon")
+            .classed("publish", d => d.type == "publish")
+            .classed("subscribe", d => d.type == "subscribe")
+            .classed("dependency", d => d.type == "dependency")
+            .attr("points", d => {
                 let height = rowScale.bandwidth();
                 let width = colScale.bandwidth();
-                let y = rowScale(cell.microservice);
-                let x = colScale(cell.channel);
+                let x, y;
 
-                let g = d3.select(this);
-                g.selectAll("polygon").remove();
-
-                if (cell.contents.publish) {
-                    g.append("polygon")
-                        .attr("points", `${x},${y} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`)
-                        .classed("publish", true)
-                }
-
-                if (cell.contents.subscribe) {
-                    g.append("polygon")
-                        .attr("points", `${x},${y} ${x+width},${y} ${x+width},${y+height} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`)
-                        .classed("subscribe", true)
+                if (d.type == "publish") {
+                    y = rowScale(d.sourceNode.name);
+                    x = colScale(d.targetNode.name);
+                    return `${x},${y} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`;
+                } else if (d.type == "subscribe") {
+                    y = rowScale(d.targetNode.name);
+                    x = colScale(d.sourceNode.name);
+                    return `${x},${y} ${x+width},${y} ${x+width},${y+height} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`;
+                } else if (d.type == "dependency") {
+                    // if (d.sourceNode.index > d.targetNode.index) {
+                        y = rowScale(d.sourceNode.name);
+                        x = colScale(d.targetNode.name);
+                        return `${x},${y} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`;
+                    // } else {
+                    //     y = rowScale(d.targetNode.name);
+                    //     x = colScale(d.sourceNode.name);
+                    //     return `${x},${y} ${x+width},${y} ${x+width},${y+height} ${x},${y+height} ${(x+width)-(width/10)},${y+(height/2)}`;
+                    // }
                 }
             });
         
         let vertical = svg.select("g.rules .vertical")
         vertical.selectAll("line")
-            .data(channels)
+            .data(show_channels ? channels : microservices)
             .join("line")
-            .attr("x1", d => colScale(d))
+            .attr("x1", d => colScale(d.name))
             .attr("y1", rowScale("") )
-            .attr("x2", d => colScale(d))
+            .attr("x2", d => colScale(d.name))
             .attr("y2", h_padded)
         
         vertical.append("line")
@@ -299,7 +300,7 @@ async function matrix_svg(json, topology) {
 
         let horizontal = svg.select("g.rules .horizontal")
         horizontal.selectAll("line")
-            .data(json)
+            .data(microservices)
             .join("line")
             .attr("x1", colScale(""))
             .attr("y1", d => rowScale(d.name))
@@ -314,7 +315,7 @@ async function matrix_svg(json, topology) {
         
         let highlights = svg.select("g.highlights");
         highlights.selectAll("rect")
-            .data(topology.nodes.filter(d => d.type == "microservice"))
+            .data(microservices)
             .join("rect")
             .attr("x", 0)
             .attr("y", d => rowScale(d.name))
@@ -326,7 +327,7 @@ async function matrix_svg(json, topology) {
             .on("click", function(d) {
                 this.__data__.type = "microservice";
                 this.__data__.original_obj = this.__data__;
-                select(this, json);
+                select(this);
             });
     }
 
@@ -391,7 +392,7 @@ function make_edge(type, source, target) {
 }
 
 function setup_edges(json) {
-    let show_channels = document.getElementById("channel_checkbox").checked
+    let show_channels = get_checkbox("channel_checkbox");
 
     let nodes = [];
     let edges = [];
@@ -526,7 +527,7 @@ async function json_graph() {
     let json = await d3.json("json/microservice_dump.json");
     topology = setup_edges(json);
     force_graph(topology);
-    matrix_svg(json, topology);
+    matrix_svg(topology);
 }
 
 async function random_graph() {
@@ -536,7 +537,7 @@ async function random_graph() {
     topology = setup_edges(random);
 
     force_graph(topology);
-    matrix_svg(random, topology);
+    matrix_svg(topology);
 }
 
 json_graph()

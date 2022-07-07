@@ -24,8 +24,14 @@ let update_matrix = null;
 
 function clear_selection() {
     if (!topology) return;
-    topology.nodes.forEach( n => n.selected = false );
-    topology.edges.forEach( e => e.selected = false );
+    topology.nodes.forEach( n => {
+        n.selected = false;
+        n.depth = undefined;
+    });
+    topology.edges.forEach( e => {
+        e.selected = false;
+        e.depth = undefined;
+    });
 }
 
 function select_up(node) {
@@ -39,6 +45,7 @@ function select_edge_down(node, depth, references) {
 
     node.outEdges.forEach( edge => {
         edge.selected = true;
+        edge.depth = depth;
         select_edge_down(edge.targetNode, depth + 1, references);
     });
 }
@@ -84,12 +91,20 @@ function force_graph(topology) {
 
     simulation = d3.forceSimulation();
 
+    let edgeScale = d3.scaleSequential()
+        // .range(["seagreen", "lightgrey"])
+        .domain([0, Math.max(10, d3.max(topology.edges, e => e.depth))])
+        .interpolator(d3.interpolateCool)
+        .clamp(true);
+
     let svg = d3.select("#force_1")
         .attr("preserveAspectRatio", "xMinYMin meet")
         .attr("viewBox", `0 0 ${w} ${h}`)
         .call(svg_zoom);
 
-    tick = function() {
+    tick = function(update_selection) {
+        if (update_selection) edgeScale.domain([0, d3.max(topology.edges, e => e.depth)]);
+
         svg.select("g.edges")
             .selectAll("line")
             .data(topology.edges)
@@ -101,7 +116,10 @@ function force_graph(topology) {
             .attr("y2", d => d.target.y)
             .classed("publish", d => d.type == "publish")
             .classed("subscribe", d => d.type == "subscribe" || d.type == "dependency")
-            .classed("selected", edge => edge.selected );
+            .classed("selected", edge => edge.selected )
+            .style("stroke", d => {
+                return d.depth != undefined ? edgeScale(d.depth) : null
+            });
 
         svg.select("g.nodes")
             .selectAll("circle")
@@ -489,7 +507,7 @@ function setup_edges(json) {
 }
 
 function update() {
-    tick();
+    tick(true);
     update_matrix();
 }
 

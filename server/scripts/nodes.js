@@ -45,7 +45,7 @@ function select_edge_down(node, depth, references) {
 
     node.outEdges.forEach( edge => {
         edge.selected = true;
-        edge.depth = depth;
+        edge.depth = edge.depth == undefined ? depth : Math.min(depth, edge.depth);
         select_edge_down(edge.targetNode, depth + 1, references);
     });
 }

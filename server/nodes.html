@@ -32,8 +32,8 @@
             <br>
             <button onclick="json_graph()">Update</button>
             <button onclick="random_graph()">Randomise</button>
+            <label for="channel_checkbox" class="noselect">Channels</label>
             <input type="checkbox" id="channel_checkbox" name="channel" checked="true">
-            <label for="channel_checkbox">Channels</label>
             <input type="number" min="0" max="10000" step="1" value="" id="num_m">
             <input type="number" min="0" max="10000" step="1" value="" id="num_ch">
             <input type="number" min="0" max="10000" step="1" value="" id="num_con">
@@ -58,14 +58,14 @@
             <br>
             <button onclick="resetZoom(document.getElementById('matrix_2'))">Reset Zoom</button>
             <button onclick="matrix_json()">Update</button>
+            <label for="scroll_checkbox" class="noselect">Enable Scrolling</label>
             <input type="checkbox" id="scroll_checkbox" name="scroll" checked="true">
-            <label for="scroll_checkbox">Enable Scrolling</label>
         </div>
     </div>
     <label for="search">Search:</label>
     <input id="searchbar" onkeyup="search()" type="text" name="search">
-    <!-- <input type="checkbox" id="channel_checkbox" name="channel" checked="true">
-    <label for="channel_checkbox">Channels</label> -->
+    <label for="fade_checkbox" class="noselect">Fade</label>
+    <input type="checkbox" id="fade_checkbox" name="fade" checked="true">
 
 <script type="module">
     import "https://cdn.skypack.dev/d3-scale-chromatic@3";    

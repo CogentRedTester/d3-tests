@@ -25,6 +25,10 @@ svg .background {
     height: clamp(300px, 70vh, 70vh);
 }
 
+.noselect {
+    user-select: none;
+}
+
 /* Clear floats after the columns */
 .row:after {
 content: "";

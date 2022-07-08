@@ -27,10 +27,12 @@ function clear_selection() {
     topology.nodes.forEach( n => {
         n.selected = false;
         n.depth = undefined;
+        n.fade = undefined;
     });
     topology.edges.forEach( e => {
         e.selected = false;
         e.depth = undefined;
+        e.fade = undefined;
     });
 }
 
@@ -42,6 +44,8 @@ function select_edge_down(node, depth, references) {
     // if (depth > 2) return;
     if (references[node.index]) return;
     references[node.index] = true;
+
+    node.fade = false;
 
     node.outEdges.forEach( edge => {
         edge.selected = true;
@@ -102,8 +106,14 @@ function force_graph(topology) {
         .attr("viewBox", `0 0 ${w} ${h}`)
         .call(svg_zoom);
 
+    let any_selection = topology.nodes.some(n => n.selected === true);
+
     tick = function(update_selection) {
-        if (update_selection) edgeScale.domain([0, d3.max(topology.edges, e => e.depth)]);
+        let fade = get_checkbox("fade_checkbox");
+        if (update_selection) {
+            edgeScale.domain([0, d3.max(topology.edges, e => e.depth)]);
+            any_selection = topology.nodes.some(n => n.selected === true);
+        }
 
         svg.select("g.edges")
             .selectAll("line")
@@ -117,6 +127,7 @@ function force_graph(topology) {
             .classed("publish", d => d.type == "publish")
             .classed("subscribe", d => d.type == "subscribe" || d.type == "dependency")
             .classed("selected", edge => edge.selected )
+            .classed("fade", edge => fade && any_selection && !edge.selected)
             .style("stroke", d => {
                 return d.depth != undefined ? edgeScale(d.depth) : null
             });
@@ -132,6 +143,7 @@ function force_graph(topology) {
             .classed("microservice", d => d.type == "microservice")
             .classed("channel", d => d.type == "channel")
             .classed("selected", d => d.selected)
+            .classed("fade", d => fade && any_selection && !d.selected && d.fade !== false)
             .on("click", function(d) {
                 select(this)
             });
@@ -143,6 +155,7 @@ function force_graph(topology) {
             .text(d => d.name)
             .attr("x", d => d.x)
             .attr("y", d => d.y)
+            .classed("fade", d => fade && any_selection && !d.selected && d.fade !== false)
     }
 
     // creates repulsion between microservice nodes only
@@ -522,8 +535,14 @@ function search() {
     topology.nodes.forEach( node => {
         if (node.name.toLowerCase().indexOf(input) != -1) {
             node.selected = true;
+            node.outEdges.forEach( edge => {
+                edge.selected = true;
+            });
+            node.inEdges.forEach( edge => {
+                edge.selected = true;
+            });
         }
-    })
+    });
 
     update();
 }

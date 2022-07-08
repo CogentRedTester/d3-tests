@@ -29,6 +29,10 @@ svg .background {
     user-select: none;
 }
 
+.fade {
+    opacity: 0.1;
+}
+
 /* Clear floats after the columns */
 .row:after {
 content: "";
@@ -131,10 +135,15 @@ rect.selected {
     stroke: lime;
 }
 
-/* .edges line.selected.subscribe {
+.edges line.selected.subscribe {
     fill: coral;
     stroke: coral;
-} */
+}
+
+.edges line.selected.publish {
+    fill: seagreen;
+    stroke: seagreen;
+}
 
 /* #arrowhead-publish .arrow {
     fill: seagreen;

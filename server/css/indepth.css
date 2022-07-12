@@ -107,7 +107,7 @@ circle.channel {
 
 circle.selected,
 rect.selected {
-    fill: khaki;
+    fill: orange;
 }
 
 .highlight.background {
@@ -115,7 +115,7 @@ rect.selected {
 }
 
 .selected.highlight {
-    opacity: 40%;
+    opacity: 20%;
 }
 
 .edges line,

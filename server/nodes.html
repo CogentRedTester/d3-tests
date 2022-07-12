@@ -33,7 +33,7 @@
             <button onclick="json_graph()">Update</button>
             <button onclick="random_graph()">Randomise</button>
             <label for="channel_checkbox" class="noselect">Channels</label>
-            <input type="checkbox" id="channel_checkbox" name="channel" checked="true">
+            <input type="checkbox" id="channel_checkbox" name="channel" checked="true" onchange="update()">
             <input type="number" min="0" max="10000" step="1" value="" id="num_m">
             <input type="number" min="0" max="10000" step="1" value="" id="num_ch">
             <input type="number" min="0" max="10000" step="1" value="" id="num_con">
@@ -64,8 +64,15 @@
     </div>
     <label for="search">Search:</label>
     <input id="searchbar" onkeyup="search()" type="text" name="search">
+    
     <label for="fade_checkbox" class="noselect">Fade</label>
-    <input type="checkbox" id="fade_checkbox" name="fade" checked="true">
+    <input type="checkbox" id="fade_checkbox" name="fade" checked="true" onchange="update()">
+    
+    <label for="node_colour" class="noselect">Colour Nodes</label>
+    <input type="checkbox" id="node_colour" name="node_colour" checked="true" onchange="update()">
+
+    <label for="edge_colour" class="noselect">Colour Edges</label>
+    <input type="checkbox" id="edge_colour" name="edge_colour" checked="true" onchange="update()">
 
 <script type="module">
     import "https://cdn.skypack.dev/d3-scale-chromatic@3";    

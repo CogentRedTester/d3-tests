@@ -19,6 +19,9 @@ function drag(simulation) {
 
 let topology = null;
 let simulation = null;
+let fade = null;
+let node_colour = null;
+let edge_colour = null;
 let tick = null;
 let update_matrix = null;
 
@@ -46,7 +49,7 @@ function select_edge_down(node, depth, references) {
     references[node.index] = true;
 
     node.fade = false;
-
+    node.depth = node.depth == undefined ? depth : Math.min(depth, node.depth);
     node.outEdges.forEach( edge => {
         edge.selected = true;
         edge.depth = edge.depth == undefined ? depth : Math.min(depth, edge.depth);
@@ -109,7 +112,6 @@ function force_graph(topology) {
     let any_selection = topology.nodes.some(n => n.selected === true);
 
     tick = function(update_selection) {
-        let fade = get_checkbox("fade_checkbox");
         if (update_selection) {
             edgeScale.domain([0, d3.max(topology.edges, e => e.depth)]);
             any_selection = topology.nodes.some(n => n.selected === true);
@@ -128,9 +130,7 @@ function force_graph(topology) {
             .classed("subscribe", d => d.type == "subscribe" || d.type == "dependency")
             .classed("selected", edge => edge.selected )
             .classed("fade", edge => fade && any_selection && !edge.selected)
-            .style("stroke", d => {
-                return d.depth != undefined ? edgeScale(d.depth) : null
-            });
+            .style("stroke", !edge_colour ? null : d => d.depth != undefined ? edgeScale(d.depth) : null);
 
         svg.select("g.nodes")
             .selectAll("circle")
@@ -143,6 +143,7 @@ function force_graph(topology) {
             .classed("microservice", d => d.type == "microservice")
             .classed("channel", d => d.type == "channel")
             .classed("selected", d => d.selected)
+            .style("fill", !node_colour ? null : d => d.type == "microservice" && d.depth ? edgeScale(d.depth) : null)
             .classed("fade", d => fade && any_selection && !d.selected && d.fade !== false)
             .on("click", function(d) {
                 select(this)
@@ -264,7 +265,19 @@ async function matrix_svg(topology) {
         return v + rowScale.bandwidth() / 2
     }
 
-    update_matrix = function() {
+    let edgeScale = d3.scaleSequential()
+        // .range(["seagreen", "lightgrey"])
+        .domain([0, Math.max(10, d3.max(topology.edges, e => e.depth))])
+        .interpolator(d3.interpolateCool)
+        .clamp(true);
+    let any_selection = topology.nodes.some(n => n.selected === true);
+
+    update_matrix = function(update_selection) {
+        if (update_selection) {
+            edgeScale.domain([0, d3.max(topology.edges, e => e.depth)]);
+            any_selection = topology.nodes.some(n => n.selected === true);
+        }
+
         svg.select("g.headers.rows")
             .selectAll("text")
             .data(microservices)
@@ -272,6 +285,8 @@ async function matrix_svg(topology) {
             .text(d => d.name)
             .attr("x", column_mid())
             .attr("y", row_mid )
+            .classed("fade", d => any_selection && !d.selected && d.fade != false)
+            .style("fill", !node_colour ? null : d => d.depth ? edgeScale(d.depth) : null)
         
         svg.select("g.headers.columns")
             .selectAll("text")
@@ -280,6 +295,7 @@ async function matrix_svg(topology) {
             .text( d => d.name )
             .attr("x", column_mid)
             .attr("y", row_mid())
+            .classed("fade", d => any_selection && !d.selected && d.fade != false)
         
         svg.select("g.cells.data")
             .selectAll("polygon")
@@ -288,6 +304,8 @@ async function matrix_svg(topology) {
             .classed("publish", d => d.type == "publish")
             .classed("subscribe", d => d.type == "subscribe")
             .classed("dependency", d => d.type == "dependency")
+            .style("fill", !edge_colour ? null : d => d.depth != undefined ? edgeScale(d.depth) : null)
+            .classed("fade", d => any_selection && !d.selected)
             .attr("points", d => {
                 let height = rowScale.bandwidth();
                 let width = colScale.bandwidth();
@@ -520,8 +538,11 @@ function setup_edges(json) {
 }
 
 function update() {
+    fade = get_checkbox("fade_checkbox");
+    node_colour = get_checkbox("node_colour");
+    edge_colour = get_checkbox("edge_colour");
     tick(true);
-    update_matrix();
+    update_matrix(true);
 }
 
 function search() {

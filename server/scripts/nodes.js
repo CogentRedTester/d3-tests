@@ -18,6 +18,7 @@ function drag(simulation) {
 }
 
 let topology = null;
+let microservice_list = null;
 let simulation = null;
 let fade = null;
 let node_colour = null;
@@ -197,13 +198,19 @@ function force_graph(topology) {
 
 }
 
-function get_names(arr, key) {
-    if (!key) key = "name"
-    let names = []
-    for (const city of arr) {
-        names.push(city[key])
+function get_names(arr, key, pred) {
+    let copy = Array.from(arr);
+    if (pred) {
+        copy.sort(pred);
     }
-    return names
+
+    if (!key) key = "name";
+    let names = [];
+    for (const city of copy) {
+        names.push(city[key]);
+    }
+    names.unshift("");
+    return names;
 }
 
 async function matrix_svg(topology) {
@@ -233,10 +240,8 @@ async function matrix_svg(topology) {
     //     .style("width", w+"px")
     //     .style("height", h+"px")
     
-    let m_names = get_names(microservices).sort( (a,b) => a.localeCompare(b) );
-    let c_names = get_names(channels).sort( (a,b) => a.localeCompare(b) );
-    m_names.unshift("");
-    c_names.unshift("");
+    let m_names = get_names(microservice_list);
+    let c_names = get_names(channels, null, (a,b) => a.name.localeCompare(b.name) );
 
     let rowScale = d3.scaleBand()
         .domain(m_names)
@@ -276,6 +281,9 @@ async function matrix_svg(topology) {
         if (update_selection) {
             edgeScale.domain([0, d3.max(topology.edges, e => e.depth)]);
             any_selection = topology.nodes.some(n => n.selected === true);
+
+            m_names = get_names(microservice_list);
+            rowScale.domain(m_names);
         }
 
         svg.select("g.headers.rows")
@@ -284,9 +292,10 @@ async function matrix_svg(topology) {
             .join("text")
             .text(d => d.name)
             .attr("x", column_mid())
-            .attr("y", row_mid )
-            .classed("fade", d => any_selection && !d.selected && d.fade != false)
+            .classed("fade", d => fade && any_selection && !d.selected && d.fade != false)
             .style("fill", !node_colour ? null : d => d.depth ? edgeScale(d.depth) : null)
+            .transition()
+            .attr("y", row_mid )
         
         svg.select("g.headers.columns")
             .selectAll("text")
@@ -295,7 +304,7 @@ async function matrix_svg(topology) {
             .text( d => d.name )
             .attr("x", column_mid)
             .attr("y", row_mid())
-            .classed("fade", d => any_selection && !d.selected && d.fade != false)
+            .classed("fade", d => fade && any_selection && !d.selected && d.fade != false)
         
         svg.select("g.cells.data")
             .selectAll("polygon")
@@ -305,7 +314,8 @@ async function matrix_svg(topology) {
             .classed("subscribe", d => d.type == "subscribe")
             .classed("dependency", d => d.type == "dependency")
             .style("fill", !edge_colour ? null : d => d.depth != undefined ? edgeScale(d.depth) : null)
-            .classed("fade", d => any_selection && !d.selected)
+            .classed("fade", d => fade && any_selection && !d.selected)
+            .transition()
             .attr("points", d => {
                 let height = rowScale.bandwidth();
                 let width = colScale.bandwidth();
@@ -377,6 +387,27 @@ async function matrix_svg(topology) {
                 this.__data__.type = "microservice";
                 this.__data__.original_obj = this.__data__;
                 select(this);
+            });
+        
+        function get_weight(node, channel) {
+            console.log(node.data, channel);
+            let inf = node.data.channels[channel];
+            if (!inf) return 0;
+            return (inf.publish ? 2 : 0) + (inf.subscribe ? 1 : 0);
+        }
+        svg.select("g.sorts")
+            .selectAll("rect")
+            .data(show_channels ? channels : microservices)
+            .join("rect")
+            .attr("x", d => colScale(d.name))
+            .attr("y", 0)
+            .attr("width", colScale.bandwidth())
+            .attr("height", rowScale.bandwidth())
+            .classed("sorts", true)
+            .on("click", (e, d) => {
+                sort((a,b) => {
+                    return get_weight(a, d.name) < get_weight(b, d.name);
+                })
             });
     }
 
@@ -534,6 +565,7 @@ function setup_edges(json) {
         }
     }
 
+    microservice_list = Array.from(nodes.filter(n => n.type == "microservice"));
     return {nodes: nodes, edges: edges}
 }
 
@@ -544,6 +576,24 @@ function update() {
     tick(true);
     update_matrix(true);
 }
+
+function sort_rows(pred) {
+    pred = pred || function(a,b){ return a.name.localeCompare(b.name); };
+    microservice_list.sort((a,b) => {
+        if (a.type != "microservice") return true;
+        if (b.type != "microservice") return false;
+        return pred(a, b);
+    })
+}
+
+function sort(pred) {
+    sort_rows(pred);
+    update();
+}
+
+function sort_selected(a,b) {
+    return (a.depth ?? Number.MAX_SAFE_INTEGER) > (b.depth ?? Number.MAX_SAFE_INTEGER);
+ }
 
 function search() {
     if (!topology) return;
@@ -584,6 +634,7 @@ async function json_graph() {
     clear_selection();
     let json = await d3.json("json/microservice_dump.json");
     topology = setup_edges(json);
+    sort_rows();
     force_graph(topology);
     matrix_svg(topology);
 }
@@ -593,6 +644,7 @@ async function random_graph() {
     clear_selection();
 
     topology = setup_edges(random);
+    sort_rows();
 
     force_graph(topology);
     matrix_svg(topology);

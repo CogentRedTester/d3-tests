@@ -53,6 +53,7 @@
                         <g class="matrix horizontal"></g>
                     </g>
                     <g class="highlights"></g>
+                    <g class="sorts"></g>
                 </svg>
             </div>
             <br>
@@ -60,20 +61,26 @@
             <button onclick="matrix_json()">Update</button>
             <label for="scroll_checkbox" class="noselect">Enable Scrolling</label>
             <input type="checkbox" id="scroll_checkbox" name="scroll" checked="true">
+            |
+            <button onclick="sort()">Reset Sort</button>
+            <button onclick="sort(sort_selected)">Sort Selected</button>
+
         </div>
     </div>
     <label for="search">Search:</label>
     <input id="searchbar" onkeyup="search()" type="text" name="search">
-    
+    |
     <label for="fade_checkbox" class="noselect">Fade</label>
     <input type="checkbox" id="fade_checkbox" name="fade" checked="true" onchange="update()">
-    
+    |
     <label for="node_colour" class="noselect">Colour Nodes</label>
     <input type="checkbox" id="node_colour" name="node_colour" checked="true" onchange="update()">
-
+    |
     <label for="edge_colour" class="noselect">Colour Edges</label>
     <input type="checkbox" id="edge_colour" name="edge_colour" checked="true" onchange="update()">
-
+    |
+    <label for="edge_colour" class="noselect">Colour Edges</label>
+    <input type="checkbox" id="edge_colour" name="edge_colour" checked="true" onchange="update()">
 <script type="module">
     import "https://cdn.skypack.dev/d3-scale-chromatic@3";    
 </script>

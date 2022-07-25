@@ -118,6 +118,10 @@ rect.selected {
     opacity: 20%;
 }
 
+.sorts {
+    opacity: 0;
+}
+
 .edges line,
 .edges.arrow {
     stroke-width: 1;

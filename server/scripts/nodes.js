@@ -18,7 +18,8 @@ function drag(simulation) {
 }
 
 let topology = null;
-let microservice_list = null;
+let row_list = null;
+let column_list = null;
 let simulation = null;
 let fade = null;
 let node_colour = null;
@@ -239,16 +240,13 @@ async function matrix_svg(topology) {
     // d3.select("#matrix_2_container")
     //     .style("width", w+"px")
     //     .style("height", h+"px")
-    
-    let m_names = get_names(microservice_list);
-    let c_names = get_names(channels, null, (a,b) => a.name.localeCompare(b.name) );
 
     let rowScale = d3.scaleBand()
-        .domain(m_names)
+        .domain(get_names(row_list))
         .range([margin.top, h_padded])
         // .paddingInner(0.1)
     let colScale = d3.scaleBand()
-        .domain( show_channels ? c_names : m_names)
+        .domain(get_names(column_list))
         .range([margin.left, w_padded])
         // .paddingInner(0.1)
 
@@ -282,8 +280,8 @@ async function matrix_svg(topology) {
             edgeScale.domain([0, d3.max(topology.edges, e => e.depth)]);
             any_selection = topology.nodes.some(n => n.selected === true);
 
-            m_names = get_names(microservice_list);
-            rowScale.domain(m_names);
+            rowScale.domain(get_names(row_list));
+            colScale.domain(get_names(column_list));
         }
 
         svg.select("g.headers.rows")
@@ -302,9 +300,10 @@ async function matrix_svg(topology) {
             .data(show_channels ? channels : microservices)
             .join("text")
             .text( d => d.name )
-            .attr("x", column_mid)
             .attr("y", row_mid())
             .classed("fade", d => fade && any_selection && !d.selected && d.fade != false)
+            .transition()
+            .attr("x", column_mid)
         
         svg.select("g.cells.data")
             .selectAll("polygon")
@@ -390,7 +389,6 @@ async function matrix_svg(topology) {
             });
         
         function get_weight(node, channel) {
-            console.log(node.data, channel);
             let inf = node.data.channels[channel];
             if (!inf) return 0;
             return (inf.publish ? 2 : 0) + (inf.subscribe ? 1 : 0);
@@ -406,7 +404,7 @@ async function matrix_svg(topology) {
             .classed("sorts", true)
             .on("click", (e, d) => {
                 sort((a,b) => {
-                    return get_weight(a, d.name) < get_weight(b, d.name);
+                    return get_weight(b, d.name) - get_weight(a, d.name);
                 })
             });
     }
@@ -542,7 +540,6 @@ function setup_edges(json) {
             } else {
                 if (element.publish) {
                     channels[channel].subscribers.forEach( ms => {
-                        console.log(ms);
                         let edge = make_edge("dependency", microservice.node, ms);
                         microservice.node.outEdges.push(edge);
                         ms.inEdges.push(edge);
@@ -565,7 +562,11 @@ function setup_edges(json) {
         }
     }
 
-    microservice_list = Array.from(nodes.filter(n => n.type == "microservice"));
+    column_list = Array.from(show_channels ? nodes.filter(n => n.type == "channel") : nodes);
+    row_list = Array.from(nodes.filter(n => n.type == "microservice"));
+
+    sort_rows();
+    sort_columns();
     return {nodes: nodes, edges: edges}
 }
 
@@ -579,20 +580,30 @@ function update() {
 
 function sort_rows(pred) {
     pred = pred || function(a,b){ return a.name.localeCompare(b.name); };
-    microservice_list.sort((a,b) => {
-        if (a.type != "microservice") return true;
-        if (b.type != "microservice") return false;
-        return pred(a, b);
-    })
+    row_list.sort(pred)
 }
 
-function sort(pred) {
-    sort_rows(pred);
+function sort_columns(pred) {
+    pred = pred || function(a,b){ return a.name.localeCompare(b.name); };
+    column_list.sort(pred)
+}
+
+function sort(row_pred, col_pred) {
+    if (row_pred) sort_rows();
+    if (col_pred) sort_columns();
+    sort_rows(row_pred);
+    sort_columns(col_pred);
     update();
 }
 
+function sort_used_cols(a,b) {
+    console.log({a, b, n: (b.fade === false) - (a.fade === false)})
+    // return b.fade === false - a.fade === false;
+    return (b.fade === false) - (a.fade === false);
+}
+
 function sort_selected(a,b) {
-    return (a.depth ?? Number.MAX_SAFE_INTEGER) > (b.depth ?? Number.MAX_SAFE_INTEGER);
+    return (a.depth ?? Number.MAX_SAFE_INTEGER) - (b.depth ?? Number.MAX_SAFE_INTEGER);
  }
 
 function search() {
@@ -634,7 +645,6 @@ async function json_graph() {
     clear_selection();
     let json = await d3.json("json/microservice_dump.json");
     topology = setup_edges(json);
-    sort_rows();
     force_graph(topology);
     matrix_svg(topology);
 }
@@ -644,7 +654,6 @@ async function random_graph() {
     clear_selection();
 
     topology = setup_edges(random);
-    sort_rows();
 
     force_graph(topology);
     matrix_svg(topology);

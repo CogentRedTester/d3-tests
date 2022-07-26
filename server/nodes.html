@@ -63,7 +63,7 @@
             <input type="checkbox" id="scroll_checkbox" name="scroll" checked="true">
             |
             <button onclick="sort()">Reset Sort</button>
-            <button onclick="sort(sort_selected)">Sort Selected</button>
+            <button onclick="sort(sort_selected, sort_used_cols)">Sort Selected</button>
 
         </div>
     </div>
@@ -79,8 +79,8 @@
     <label for="edge_colour" class="noselect">Colour Edges</label>
     <input type="checkbox" id="edge_colour" name="edge_colour" checked="true" onchange="update()">
     |
-    <label for="edge_colour" class="noselect">Colour Edges</label>
-    <input type="checkbox" id="edge_colour" name="edge_colour" checked="true" onchange="update()">
+    <!-- <label for="edge_colour" class="noselect">Colour Edges</label>
+    <input type="checkbox" id="edge_colour" name="edge_colour" checked="true" onchange="update()"> -->
 <script type="module">
     import "https://cdn.skypack.dev/d3-scale-chromatic@3";    
 </script>

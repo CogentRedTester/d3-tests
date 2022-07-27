@@ -302,6 +302,7 @@ async function matrix_svg(topology) {
             .text( d => d.name )
             .attr("y", row_mid())
             .classed("fade", d => fade && any_selection && !d.selected && d.fade != false)
+            .style("fill", !node_colour ? null : d => d.depth ? edgeScale(d.depth) : null)
             .transition()
             .attr("x", column_mid)
         

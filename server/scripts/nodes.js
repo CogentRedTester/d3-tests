@@ -47,14 +47,14 @@ function select_up(node) {
 
 function select_edge_down(node, depth, references) {
     // if (depth > 2) return;
-    if (references[node.index]) return;
+    if (references[node.index] && depth > node.depth) return;
     references[node.index] = true;
 
     node.fade = false;
-    node.depth = node.depth == undefined ? depth : Math.min(depth, node.depth);
+    node.depth = Math.min(depth, node.depth ?? depth);
     node.outEdges.forEach( edge => {
         edge.selected = true;
-        edge.depth = edge.depth == undefined ? depth : Math.min(depth, edge.depth);
+        edge.depth = Math.min(depth, edge.depth ?? depth);
         select_edge_down(edge.targetNode, depth + 1, references);
     });
 }
